@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mystats/services/auth_service.dart';
 
-final splashViewModelProvider = Provider((ref) => SplashViewModel());
+final splashViewModelProvider = Provider((ref) => SplashViewModel(ref));
 
 class SplashViewModel {
+  final Ref _ref;
+  
+  SplashViewModel(this._ref);
+
   Future<void> checkAndNavigate(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 2));
-    // TODO: 실제 로그인 상태 체크 로직 구현
-    const isLoggedIn = false;
-
+    
     if (context.mounted) {
+      final authService = _ref.read(authServiceProvider);
+      final isLoggedIn = await authService.isLoggedIn();
+      
       if (isLoggedIn) {
         context.go('/home');
       } else {
