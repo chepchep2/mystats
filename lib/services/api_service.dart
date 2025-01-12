@@ -16,6 +16,10 @@ class ApiService {
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
+  void removeToken() {
+    _dio.options.headers.remove('Authorization');
+  }
+
   Future<(String, UserModel)> login(String email, String password) async {
     try {
       debugPrint('로그인 시도: $email');
@@ -55,6 +59,42 @@ class ApiService {
     } on DioException catch (e) {
       debugPrint('Token validation failed: ${e.message}');
       return false;
+    }
+  }
+
+  // 회원가입
+  Future<(String, UserModel)> register({
+    required String email,
+    required String password,
+    required String name,
+    String? team,
+  }) async {
+    try {
+      debugPrint('회원가입 시도: $email');
+      final data = {
+        'email': email,
+        'password': password,
+        'name': name,
+      };
+
+      if (team != null) {
+        data['team'] = team;
+      }
+
+      final response = await _dio.post('/auth/signup', data: data);
+
+      debugPrint('회원가입 응답: ${response.data}');
+
+      final token = response.data['token'] as String;
+      final user = UserModel.fromJson(response.data['user']);
+
+      return (token, user);
+    } on DioException catch (e) {
+      debugPrint('회원가입 에러 응답: ${e.response?.data}');
+      if (e.response != null && e.response?.statusCode != 200) {
+        throw e.response?.data?['error'] ?? '회원가입에 실패했습니다.';
+      }
+      throw '서버 연결에 실패했습니다.';
     }
   }
 }

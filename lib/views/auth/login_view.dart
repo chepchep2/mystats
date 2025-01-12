@@ -69,7 +69,7 @@ class LoginView extends ConsumerWidget {
                 text: '회원가입',
                 textColor: Colors.black,
                 onPressed: () {
-                  // TODO: 회원가입 화면으로 이동
+                  context.push('/register');
                 },
               ),
             ],
