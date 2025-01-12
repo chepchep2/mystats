@@ -25,7 +25,10 @@ class AuthService {
     _api.setToken(token);
   }
 
-  // TODO: 로그아웃 만들기
+  Future<void> logout() async {
+    await _storage.delete(key: 'authToken');
+    _api.removeToken();
+  }
 
   Future<String?> getToken() async {
     final token = await _storage.read(key: 'authToken');
