@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mystats/viewmodels/auth/login_viewmodel.dart';
 import 'package:mystats/widgets/common/custom_button.dart';
 import 'package:mystats/widgets/common/custom_text_field.dart';
 
@@ -9,6 +11,9 @@ class LoginView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loginState = ref.watch(loginViewModelProvider);
+    final loginVM = ref.read(loginViewModelProvider.notifier);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -28,26 +33,34 @@ class LoginView extends ConsumerWidget {
               CustomTextField(
                 hint: 'ID를 입력하세요',
                 prefixIcon: FontAwesomeIcons.user,
-                onChanged: (value) {
-                  debugPrint(value);
-                },
+                controller: loginVM.idController,
               ),
               const SizedBox(height: 16),
               CustomTextField(
                 hint: '비밀번호를 입력하세요',
                 prefixIcon: FontAwesomeIcons.lock,
                 isPassword: true,
-                onChanged: (value) {
-                  debugPrint(value);
-                },
+                controller: loginVM.passwordController,
               ),
+              if (loginState.error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    loginState.error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
               const SizedBox(height: 24),
               CustomButton(
                 backgroundColor: Colors.white,
                 text: '로그인',
                 textColor: Colors.black,
-                onPressed: () {
-                  // TODO: 로그인 로직 구현
+                isLoading: loginState.isLoading,
+                onPressed: () async {
+                  final success = await loginVM.login();
+                  if (success && context.mounted) {
+                    context.go('/home');
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -56,7 +69,7 @@ class LoginView extends ConsumerWidget {
                 text: '회원가입',
                 textColor: Colors.black,
                 onPressed: () {
-                  // TODO: 회원가입 로직 구현
+                  // TODO: 회원가입 화면으로 이동
                 },
               ),
             ],

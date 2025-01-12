@@ -1,20 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mystats/services/api_service.dart';
 
 final authServiceProvider = Provider((ref) => AuthService());
 
 class AuthService {
   final _storage = const FlutterSecureStorage();
+  final _api = ApiService();
 
   Future<bool> isLoggedIn() async {
     try {
-      final token = await _storage.read(key: 'authToken');
-      return token != null;
+      final token = await getToken();
+      if (token == null) return false;
+
+      // 토큰 유효성 검증
+      return await _api.validateToken();
     } catch (e) {
       return false;
     }
   }
 
-  // TODO: saveToken 메서드 구현(로그인 성공시 토큰 저장)
-  // TODO: logout 메서드 구현(토큰 삭제)
+  Future<void> saveToken(String token) async {
+    await _storage.write(key: 'authToken', value: token);
+    _api.setToken(token);
+  }
+
+  // TODO: 로그아웃 만들기
+
+  Future<String?> getToken() async {
+    final token = await _storage.read(key: 'authToken');
+    if (token != null) {
+      _api.setToken(token);
+    }
+    return token;
+  }
 }
