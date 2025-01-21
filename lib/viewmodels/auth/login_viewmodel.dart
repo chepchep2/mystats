@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mystats/models/user/user_model.dart';
-import 'package:mystats/services/api_service.dart';
 import 'package:mystats/services/auth_service.dart';
 
-// 로그인 상태를 나타내는 클래스
 class LoginState {
   final bool isLoading;
   final String? error;
@@ -32,19 +30,24 @@ class LoginState {
 final loginViewModelProvider =
     StateNotifierProvider<LoginViewModel, LoginState>(
   (ref) {
-    final apiService = ApiService();
     final authService = ref.watch(authServiceProvider);
-    return LoginViewModel(apiService, authService);
+    return LoginViewModel(authService);
   },
 );
 
 class LoginViewModel extends StateNotifier<LoginState> {
-  final ApiService _apiService;
   final AuthService _authService;
-  final idController = TextEditingController();
-  final passwordController = TextEditingController();
 
-  LoginViewModel(this._apiService, this._authService) : super(LoginState());
+  final TextEditingController idController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  LoginViewModel(this._authService) : super(LoginState());
+
+  void clearFields() {
+    idController.clear();
+    passwordController.clear();
+    state = LoginState();
+  }
 
   Future<bool> login() async {
     if (idController.text.isEmpty || passwordController.text.isEmpty) {
@@ -55,12 +58,11 @@ class LoginViewModel extends StateNotifier<LoginState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final (token, user) = await _apiService.login(
+      final (token, user) = await _authService.apiService.login(
         idController.text,
         passwordController.text,
       );
 
-      // 토큰 저장
       await _authService.saveToken(token);
 
       state = state.copyWith(

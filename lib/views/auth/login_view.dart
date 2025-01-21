@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mystats/viewmodels/auth/login_viewmodel.dart';
+import 'package:mystats/viewmodels/home/home_viewmodel.dart';
 import 'package:mystats/widgets/common/custom_button.dart';
 import 'package:mystats/widgets/common/custom_text_field.dart';
 
@@ -59,6 +60,7 @@ class LoginView extends ConsumerWidget {
                 onPressed: () async {
                   final success = await loginVM.login();
                   if (success && context.mounted) {
+                    ref.read(homeViewModelProvider.notifier).resetAndLoad();
                     context.go('/home');
                   }
                 },

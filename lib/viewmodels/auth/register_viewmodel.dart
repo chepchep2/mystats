@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mystats/services/api_service.dart';
 import 'package:mystats/services/auth_service.dart';
 
 class RegisterState {
@@ -25,19 +24,18 @@ class RegisterState {
 
 final registerViewModelProvider =
     StateNotifierProvider<RegisterViewModel, RegisterState>(
-  (ref) => RegisterViewModel(),
+  (ref) => RegisterViewModel(ref.read(authServiceProvider)),
 );
 
 class RegisterViewModel extends StateNotifier<RegisterState> {
-  RegisterViewModel() : super(RegisterState());
+  RegisterViewModel(this._authService) : super(RegisterState());
+
+  final AuthService _authService;
 
   final idController = TextEditingController();
   final passwordController = TextEditingController();
   final nameController = TextEditingController();
   final teamController = TextEditingController();
-
-  final _authService = AuthService();
-  final _apiService = ApiService();
 
   @override
   void dispose() {
@@ -54,7 +52,7 @@ class RegisterViewModel extends StateNotifier<RegisterState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final result = await _apiService.register(
+      final result = await _authService.apiService.register(
         email: idController.text,
         password: passwordController.text,
         name: nameController.text,
