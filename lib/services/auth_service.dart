@@ -6,7 +6,7 @@ final authServiceProvider = Provider((ref) => AuthService());
 
 class AuthService {
   final _storage = const FlutterSecureStorage();
-  final _api = ApiService();
+  final apiService = ApiService();
 
   Future<bool> isLoggedIn() async {
     try {
@@ -14,7 +14,7 @@ class AuthService {
       if (token == null) return false;
 
       // 토큰 유효성 검증
-      return await _api.validateToken();
+      return await apiService.validateToken();
     } catch (e) {
       return false;
     }
@@ -22,18 +22,18 @@ class AuthService {
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: 'authToken', value: token);
-    _api.setToken(token);
+    apiService.setToken(token);
   }
 
   Future<void> logout() async {
     await _storage.delete(key: 'authToken');
-    _api.removeToken();
+    apiService.removeToken();
   }
 
   Future<String?> getToken() async {
     final token = await _storage.read(key: 'authToken');
     if (token != null) {
-      _api.setToken(token);
+      apiService.setToken(token);
     }
     return token;
   }
