@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mystats/views/auth/login_view.dart';
 import 'package:mystats/views/auth/register_view.dart';
 import 'package:mystats/views/home/home_view.dart';
+import 'package:mystats/views/calendar/calendar_view.dart';
 import 'package:mystats/views/splash/splash_view.dart';
 
 final GoRouter router = GoRouter(
@@ -30,6 +31,12 @@ final GoRouter router = GoRouter(
       path: '/register',
       builder: (BuildContext context, GoRouterState state) {
         return const RegisterView();
+      },
+    ),
+    GoRoute(
+      path: '/record/add',
+      builder: (BuildContext context, GoRouterState state) {
+        return const CalendarView();
       },
     )
   ],
