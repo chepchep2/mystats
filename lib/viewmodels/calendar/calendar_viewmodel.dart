@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mystats/models/game/game_model.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarState {
   final DateTime focusedDay;
   final DateTime? selectedDay;
   final CalendarFormat calendarFormat;
-  final Map<DateTime, List<dynamic>> events;
+  final Map<DateTime, List<GameModel>> events;
 
   CalendarState({
     required this.focusedDay,
@@ -19,7 +19,7 @@ class CalendarState {
     DateTime? focusedDay,
     DateTime? selectedDay,
     CalendarFormat? calendarFormat,
-    Map<DateTime, List<dynamic>>? events,
+    Map<DateTime, List<GameModel>>? events,
   }) {
     return CalendarState(
       focusedDay: focusedDay ?? this.focusedDay,
@@ -39,7 +39,7 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
   CalendarViewModel()
       : super(CalendarState(
           focusedDay: DateTime.now(),
-          calendarFormat: CalendarFormat.month, // 이 부분이 누락되어 있었음
+          calendarFormat: CalendarFormat.month,
           events: const {},
         ));
 
@@ -58,17 +58,17 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
     }
   }
 
-  void addEvent(DateTime date, dynamic event) {
-    final events = Map<DateTime, List<dynamic>>.from(state.events);
+  void addEvent(DateTime date, GameModel game) {
+    final events = Map<DateTime, List<GameModel>>.from(state.events);
     if (events[date] != null) {
-      events[date]!.add(event);
+      events[date]!.add(game);
     } else {
-      events[date] = [event];
+      events[date] = [game];
     }
     state = state.copyWith(events: events);
   }
 
-  List<dynamic> getEventsForDay(DateTime date) {
+  List<GameModel> getEventsForDay(DateTime date) {
     return state.events[date] ?? [];
   }
 }
