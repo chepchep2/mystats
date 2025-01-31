@@ -5,7 +5,6 @@ class CustomIconButton extends StatelessWidget {
   final IconData icon;
   final Color? backgroundColor;
   final Color? textColor;
-  final double? width;
   final double height;
 
   const CustomIconButton({
@@ -14,25 +13,26 @@ class CustomIconButton extends StatelessWidget {
     required this.icon,
     this.backgroundColor,
     this.textColor,
-    this.width,
-    this.height = 50,
+    this.height = 40,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
+    return SizedBox(
+      width: 40,
+      height: height,
       child: Container(
-        width: width ?? double.infinity,
-        height: height,
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: textColor ?? (onPressed == null ? Colors.grey : null),
-          size: 24,
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          onPressed: onPressed,
+          icon: Icon(
+            icon,
+            color: textColor ?? (onPressed == null ? Colors.grey : null),
+          ),
         ),
       ),
     );

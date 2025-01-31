@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mystats/services/auth_service.dart';
 import 'package:mystats/viewmodels/home/home_viewmodel.dart';
 import 'package:mystats/viewmodels/auth/login_viewmodel.dart';
+import 'package:mystats/widgets/common/custom_icon_button.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
@@ -32,18 +33,18 @@ class HomeView extends ConsumerWidget {
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(
+          CustomIconButton(
             onPressed: homeState.isLoading
                 ? null
                 : () {
                     context.push('/record/add');
                   },
-            icon: const Icon(
-              Icons.add_circle_outline,
-              color: Colors.black,
-            ),
+            icon: Icons.add_circle_outline,
+            textColor: Colors.black,
+            backgroundColor: Colors.transparent,
+            height: 40,
           ),
-          IconButton(
+          CustomIconButton(
             onPressed: homeState.isLoading
                 ? null
                 : () async {
@@ -53,10 +54,10 @@ class HomeView extends ConsumerWidget {
                       context.go('/login');
                     }
                   },
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.black,
-            ),
+            icon: Icons.logout,
+            textColor: Colors.black,
+            backgroundColor: Colors.transparent,
+            height: 40,
           ),
           const SizedBox(width: 8),
         ],
