@@ -13,8 +13,66 @@ class GameStatsDialog extends StatelessWidget {
     required this.game,
   });
 
+  bool _canRecordStats() {
+    final now = DateTime.now();
+    final gameEndTime = game.date.add(const Duration(minutes: 30));
+    return now.isAfter(gameEndTime);
+  }
+
+  void _showTimeWarning(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.access_time,
+                color: Colors.orange,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '아직 기록을 입력할 수 없습니다',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '경기 종료 30분 후부터 기록을 입력할 수 있습니다.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              CustomButton(
+                text: '확인',
+                backgroundColor: Colors.white,
+                textColor: Colors.black,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final canRecordStats = _canRecordStats();
+
     return Dialog(
       child: Container(
         padding: const EdgeInsets.all(24),
@@ -44,10 +102,14 @@ class GameStatsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             CustomButton(
+              text: '타자 기록',
               backgroundColor: Colors.white,
               textColor: Colors.black,
-              text: '타자 기록',
               onPressed: () {
+                if (!canRecordStats) {
+                  _showTimeWarning(context);
+                  return;
+                }
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -63,10 +125,14 @@ class GameStatsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             CustomButton(
+              text: '투수 기록',
               backgroundColor: Colors.white,
               textColor: Colors.black,
-              text: '투수 기록',
               onPressed: () {
+                if (!canRecordStats) {
+                  _showTimeWarning(context);
+                  return;
+                }
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -80,39 +146,6 @@ class GameStatsDialog extends StatelessWidget {
                 );
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsButton({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 24),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16),
           ],
         ),
       ),
