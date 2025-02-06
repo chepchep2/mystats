@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mystats/models/game/game_model.dart';
-import 'package:mystats/viewmodels/calendar/calendar_viewmodel.dart';
 import 'package:mystats/widgets/common/custom_text_field.dart';
 import 'package:mystats/widgets/common/custom_button.dart';
 import 'package:mystats/widgets/common/custom_time_picker.dart';
 
 class GameFormDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
+  final Function(GameModel) onSave;
+  final GameModel? initialGame;
 
   const GameFormDialog({
     super.key,
     required this.selectedDate,
+    required this.onSave,
+    this.initialGame,
   });
 
   @override
@@ -19,44 +22,57 @@ class GameFormDialog extends ConsumerStatefulWidget {
 }
 
 class _GameFormDialogState extends ConsumerState<GameFormDialog> {
-  final opponentController = TextEditingController();
-  final locationController = TextEditingController();
-  TimeOfDay selectedTime = TimeOfDay.now();
-  String? opponentError;
-  String? locationError;
+  late TextEditingController _opponentController;
+  late TextEditingController _locationController;
+  late TimeOfDay _selectedTime;
+  String? _opponentError;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _opponentController =
+        TextEditingController(text: widget.initialGame?.opponent ?? '');
+    _locationController =
+        TextEditingController(text: widget.initialGame?.location ?? '');
+    _selectedTime = widget.initialGame?.date != null
+        ? TimeOfDay(
+            hour: widget.initialGame!.date.hour,
+            minute: widget.initialGame!.date.minute)
+        : TimeOfDay.now();
+  }
 
   void _validateAndSubmit() {
     setState(() {
-      opponentError =
-          opponentController.text.trim().isEmpty ? '상대팀을 입력해주세요' : null;
-      locationError =
-          locationController.text.trim().isEmpty ? '장소를 입력해주세요' : null;
+      _opponentError =
+          _opponentController.text.trim().isEmpty ? '상대팀을 입력해주세요' : null;
+      _locationError =
+          _locationController.text.trim().isEmpty ? '장소를 입력해주세요' : null;
     });
 
-    if (opponentController.text.trim().isEmpty ||
-        locationController.text.trim().isEmpty) {
+    if (_opponentController.text.trim().isEmpty ||
+        _locationController.text.trim().isEmpty) {
       return;
     }
 
-    final DateTime gameDateTime = DateTime(
+    final gameDateTime = DateTime(
       widget.selectedDate.year,
       widget.selectedDate.month,
       widget.selectedDate.day,
-      selectedTime.hour,
-      selectedTime.minute,
+      _selectedTime.hour,
+      _selectedTime.minute,
     );
 
     final game = GameModel(
-      id: DateTime.now().millisecondsSinceEpoch,
+      id: widget.initialGame?.id ?? DateTime.now().millisecondsSinceEpoch,
       date: gameDateTime,
-      opponent: opponentController.text.trim(),
-      location: locationController.text.trim(),
+      opponent: _opponentController.text.trim(),
+      location: _locationController.text.trim(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
-    ref.read(calendarProvider.notifier).addEvent(widget.selectedDate, game);
-    Navigator.pop(context);
+    widget.onSave(game);
   }
 
   @override
@@ -109,10 +125,10 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
               ),
               const SizedBox(height: 16),
               CustomTimePicker(
-                selectedTime: selectedTime,
+                selectedTime: _selectedTime,
                 onTimeChanged: (newTime) {
                   setState(() {
-                    selectedTime = newTime;
+                    _selectedTime = newTime;
                   });
                 },
               ),
@@ -121,22 +137,22 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CustomTextField(
-                    controller: opponentController,
+                    controller: _opponentController,
                     hint: '상대팀을 입력하세요',
                     prefixIcon: Icons.people,
                     onChanged: (_) {
-                      if (opponentError != null) {
+                      if (_opponentError != null) {
                         setState(() {
-                          opponentError = null;
+                          _opponentError = null;
                         });
                       }
                     },
                   ),
-                  if (opponentError != null)
+                  if (_opponentError != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8, left: 8),
                       child: Text(
-                        opponentError!,
+                        _opponentError!,
                         style: const TextStyle(
                           color: Colors.red,
                           fontSize: 12,
@@ -150,22 +166,22 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CustomTextField(
-                    controller: locationController,
+                    controller: _locationController,
                     hint: '장소를 입력하세요',
                     prefixIcon: Icons.location_on,
                     onChanged: (_) {
-                      if (locationError != null) {
+                      if (_locationError != null) {
                         setState(() {
-                          locationError = null;
+                          _locationError = null;
                         });
                       }
                     },
                   ),
-                  if (locationError != null)
+                  if (_locationError != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8, left: 8),
                       child: Text(
-                        locationError!,
+                        _locationError!,
                         style: const TextStyle(
                           color: Colors.red,
                           fontSize: 12,
@@ -191,7 +207,7 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                       backgroundColor: Colors.white,
                       textColor: Colors.black,
                       onPressed: _validateAndSubmit,
-                      text: '추가',
+                      text: widget.initialGame != null ? '수정' : '추가',
                     ),
                   ),
                 ],

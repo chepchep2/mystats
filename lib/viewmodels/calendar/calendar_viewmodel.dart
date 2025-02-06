@@ -68,6 +68,49 @@ class CalendarViewModel extends StateNotifier<CalendarState> {
     state = state.copyWith(events: events);
   }
 
+  void addGame(GameModel game) {
+    final date = DateTime(game.date.year, game.date.month, game.date.day);
+    final events = Map<DateTime, List<GameModel>>.from(state.events);
+    if (events.containsKey(date)) {
+      events[date]!.add(game);
+    } else {
+      events[date] = [game];
+    }
+    state = state.copyWith(
+      events: events,
+      selectedDay: date,
+      focusedDay: date,
+    );
+  }
+
+  void updateGame(GameModel updatedGame) {
+    final date = DateTime(
+        updatedGame.date.year, updatedGame.date.month, updatedGame.date.day);
+    final events = Map<DateTime, List<GameModel>>.from(state.events);
+
+    if (events.containsKey(date)) {
+      final games = events[date]!;
+      final index = games.indexWhere((game) => game.id == updatedGame.id);
+      if (index != -1) {
+        games[index] = updatedGame;
+        state = state.copyWith(events: events);
+      }
+    }
+  }
+
+  void deleteGame(GameModel game) {
+    final date = DateTime(game.date.year, game.date.month, game.date.day);
+    final events = Map<DateTime, List<GameModel>>.from(state.events);
+
+    if (events.containsKey(date)) {
+      events[date]!.removeWhere((g) => g.id == game.id);
+      if (events[date]!.isEmpty) {
+        events.remove(date);
+      }
+      state = state.copyWith(events: events);
+    }
+  }
+
   List<GameModel> getEventsForDay(DateTime date) {
     return state.events[date] ?? [];
   }

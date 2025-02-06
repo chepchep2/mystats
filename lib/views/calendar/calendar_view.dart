@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mystats/views/calendar/batter_stats_page.dart';
+import 'package:mystats/views/calendar/game_delete_dialog.dart';
 import 'package:mystats/views/calendar/game_form_dialog.dart';
-import 'package:mystats/views/calendar/pitcher_stats_page.dart';
+import 'package:mystats/views/calendar/game_stats_dialog.dart';
+import 'package:mystats/widgets/common/custom_icon_button.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mystats/viewmodels/calendar/calendar_viewmodel.dart';
 
@@ -76,11 +77,21 @@ class CalendarView extends ConsumerWidget {
                           context: context,
                           builder: (context) => GameFormDialog(
                             selectedDate: calendarState.selectedDay!,
+                            onSave: (game) {
+                              ref.read(calendarProvider.notifier).addGame(game);
+                              Navigator.pop(context);
+                            },
                           ),
                         );
                       },
-                      icon: const Icon(Icons.add),
-                      label: const Text('일정 추가'),
+                      icon: const Icon(
+                        Icons.add,
+                        color: Colors.black,
+                      ),
+                      label: const Text(
+                        '일정 추가',
+                        style: TextStyle(color: Colors.black),
+                      ),
                     ),
                   ],
                 ),
@@ -98,33 +109,85 @@ class CalendarView extends ConsumerWidget {
                     final game = events[index];
 
                     return Card(
+                      color: Colors.white,
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16.0,
                         vertical: 8.0,
                       ),
                       child: ListTile(
-                        title: Text(game.opponent ?? '상대팀 미정'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        title: Text(
+                          game.opponent!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                                '시간: ${game.date.hour}:${game.date.minute.toString().padLeft(2, '0')}'),
-                            Text('장소: ${game.location ?? '장소 미정'}'),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 16),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${game.date.hour.toString().padLeft(2, '0')}:${game.date.minute.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 16),
+                                const SizedBox(width: 8),
+                                Text(
+                                  game.location!,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
+                            CustomIconButton(
+                              icon: Icons.edit,
                               onPressed: () {
-                                // TODO: 수정 기능 추가
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => GameFormDialog(
+                                    selectedDate: game.date,
+                                    initialGame: game,
+                                    onSave: (updatedGame) {
+                                      ref
+                                          .read(calendarProvider.notifier)
+                                          .updateGame(updatedGame);
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                );
                               },
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
+                            CustomIconButton(
+                              icon: Icons.delete,
                               onPressed: () {
-                                // TODO: 삭제 기능 추가
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => GameDeleteDialog(
+                                    game: game,
+                                    onDelete: () {
+                                      ref
+                                          .read(calendarProvider.notifier)
+                                          .deleteGame(game);
+                                    },
+                                  ),
+                                );
                               },
                             ),
                           ],
@@ -132,53 +195,7 @@ class CalendarView extends ConsumerWidget {
                         onTap: () {
                           showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text('${game.opponent ?? '상대팀 미정'} 기록 입력'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.sports_baseball),
-                                    title: const Text('타자 기록'),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => BatterStatsPage(
-                                            gameId: game.id,
-                                            date: game.date,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const Divider(),
-                                  ListTile(
-                                    leading: const Icon(
-                                        Icons.sports_baseball_outlined),
-                                    title: const Text('투수 기록'),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              PitcherStatsPage(
-                                            gameId: game.id,
-                                            date: game.date,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('취소'),
-                                ),
-                              ],
-                            ),
+                            builder: (context) => GameStatsDialog(game: game),
                           );
                         },
                       ),
