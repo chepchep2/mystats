@@ -78,7 +78,7 @@ class BatterStatsDialog extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatInputItem('도루실패', controller.caughtStealing),
-                      const SizedBox(width: 80),
+                      _buildStatInputItem('병살타', controller.doublePlays),
                       const SizedBox(width: 80),
                       const SizedBox(width: 80),
                     ],

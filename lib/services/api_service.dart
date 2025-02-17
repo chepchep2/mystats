@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mystats/models/record/batter_record_model.dart';
 import 'package:mystats/models/record/pitcher_record_model.dart';
 import 'package:mystats/models/user/user_model.dart';
+
+final apiServiceProvider = Provider((ref) => ApiService());
 
 class ApiService {
   final Dio _dio = Dio(
@@ -164,6 +167,118 @@ class ApiService {
     } catch (e) {
       debugPrint('예상치 못한 에러: $e');
       rethrow;
+    }
+  }
+
+  // 타자 기록 생성
+  Future<BatterRecordModel> createBatterRecord({
+    required DateTime date,
+    String? opponent,
+    String? location,
+    String? result,
+    int? myScore,
+    int? opponentScore,
+    required int plateAppearances,
+    required int atBats,
+    required int runs,
+    required int hits,
+    required int singles,
+    required int doubles,
+    required int triples,
+    required int homeruns,
+    required int walks,
+    required int rbis,
+    required int steals,
+    required int hitByPitch,
+    required int strikeouts,
+    required int doublePlays,
+  }) async {
+    try {
+      final response = await _dio.post('/api/records/batter', data: {
+        'game': {
+          'date': date.toIso8601String().split('T')[0],
+          'opponent': opponent,
+          'location': location,
+          'result': result,
+          'my_score': myScore,
+          'opponent_score': opponentScore,
+        },
+        'plate_appearances': plateAppearances,
+        'at_bats': atBats,
+        'runs': runs,
+        'hits': hits,
+        'singles': singles,
+        'doubles': doubles,
+        'triples': triples,
+        'homeruns': homeruns,
+        'walks': walks,
+        'rbis': rbis,
+        'steals': steals,
+        'hit_by_pitch': hitByPitch,
+        'strikeouts': strikeouts,
+        'double_plays': doublePlays,
+      });
+
+      debugPrint('타자 기록 생성 응답: ${response.data}');
+      return BatterRecordModel.fromJson(response.data['record']);
+    } on DioException catch (e) {
+      debugPrint('타자 기록 생성 실패: ${e.message}');
+      throw e.response?.data?['error'] ?? '타자 기록 생성에 실패했습니다.';
+    }
+  }
+
+  // 투수 기록 생성
+  Future<PitcherRecordModel> createPitcherRecord({
+    required DateTime date,
+    String? opponent,
+    String? location,
+    String? result,
+    int? myScore,
+    int? opponentScore,
+    required double innings,
+    required int wins,
+    required int losses,
+    required int saves,
+    required int holds,
+    required int battersFaced,
+    required int opponentAtBats,
+    required int hitsAllowed,
+    required int homerunsAllowed,
+    required int walks,
+    required int hitByPitch,
+    required int strikeouts,
+    required int earnedRuns,
+  }) async {
+    try {
+      final response = await _dio.post('/api/records/pitcher', data: {
+        'game': {
+          'date': date.toIso8601String().split('T')[0],
+          'opponent': opponent,
+          'location': location,
+          'result': result,
+          'my_score': myScore,
+          'opponent_score': opponentScore,
+        },
+        'innings': innings,
+        'wins': wins,
+        'losses': losses,
+        'saves': saves,
+        'holds': holds,
+        'batters_faced': battersFaced,
+        'opponent_at_bats': opponentAtBats,
+        'hits_allowed': hitsAllowed,
+        'homeruns_allowed': homerunsAllowed,
+        'walks': walks,
+        'hit_by_pitch': hitByPitch,
+        'strikeouts': strikeouts,
+        'earned_runs': earnedRuns,
+      });
+
+      debugPrint('투수 기록 생성 응답: ${response.data}');
+      return PitcherRecordModel.fromJson(response.data['record']);
+    } on DioException catch (e) {
+      debugPrint('투수 기록 생성 실패: ${e.message}');
+      throw e.response?.data?['error'] ?? '투수 기록 생성에 실패했습니다.';
     }
   }
 }
