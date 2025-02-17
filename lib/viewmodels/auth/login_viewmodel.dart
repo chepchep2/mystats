@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mystats/models/user/user_model.dart';
-import 'package:mystats/services/auth_service.dart';
+import 'package:mystats/providers/auth_provider.dart';
 
 class LoginState {
   final bool isLoading;
@@ -30,18 +30,18 @@ class LoginState {
 final loginViewModelProvider =
     StateNotifierProvider<LoginViewModel, LoginState>(
   (ref) {
-    final authService = ref.watch(authServiceProvider);
-    return LoginViewModel(authService);
+    final authNotifier = ref.watch(authProvider.notifier);
+    return LoginViewModel(authNotifier);
   },
 );
 
 class LoginViewModel extends StateNotifier<LoginState> {
-  final AuthService _authService;
+  final AuthNotifier _authNotifier;
 
   final TextEditingController idController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  LoginViewModel(this._authService) : super(LoginState());
+  LoginViewModel(this._authNotifier) : super(LoginState());
 
   void clearFields() {
     idController.clear();
@@ -58,16 +58,14 @@ class LoginViewModel extends StateNotifier<LoginState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final (token, user) = await _authService.apiService.login(
+      await _authNotifier.login(
         idController.text,
         passwordController.text,
       );
 
-      await _authService.saveToken(token);
-
       state = state.copyWith(
         isLoading: false,
-        user: user,
+        user: _authNotifier.state.user,
       );
       return true;
     } catch (e) {
