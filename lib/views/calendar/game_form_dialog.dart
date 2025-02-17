@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mystats/models/game/game_model.dart';
+import 'package:mystats/services/api_service.dart';
+import 'package:mystats/providers/auth_provider.dart';
 import 'package:mystats/widgets/common/custom_text_field.dart';
 import 'package:mystats/widgets/common/custom_button.dart';
 import 'package:mystats/widgets/common/custom_time_picker.dart';
+import 'package:go_router/go_router.dart';
 
 class GameFormDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -27,6 +30,7 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
   late TimeOfDay _selectedTime;
   String? _opponentError;
   String? _locationError;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -42,7 +46,7 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
         : TimeOfDay.now();
   }
 
-  void _validateAndSubmit() {
+  void _validateAndSubmit() async {
     setState(() {
       _opponentError =
           _opponentController.text.trim().isEmpty ? '상대팀을 입력해주세요' : null;
@@ -63,16 +67,46 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
       _selectedTime.minute,
     );
 
-    final game = GameModel(
-      id: widget.initialGame?.id ?? DateTime.now().millisecondsSinceEpoch,
-      date: gameDateTime,
-      opponent: _opponentController.text.trim(),
-      location: _locationController.text.trim(),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
-    widget.onSave(game);
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      final game = await apiService.createGame(
+        date: gameDateTime,
+        opponent: _opponentController.text.trim(),
+        location: _locationController.text.trim(),
+      );
+
+      if (mounted) {
+        widget.onSave(game);
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = e.toString();
+        if (errorMessage.contains('401')) {
+          errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
+          // 로그아웃 처리
+          ref.read(authProvider.notifier).logout();
+          // 로그인 화면으로 이동
+          if (context.mounted) {
+            context.go('/login');
+          }
+        } else {
+          errorMessage = '경기 일정 추가 실패';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -101,27 +135,37 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => context.pop(),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${widget.selectedDate.year}년 ${widget.selectedDate.month}월 ${widget.selectedDate.day}일',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
+              CustomTextField(
+                controller: _opponentController,
+                hint: '상대팀을 입력하세요',
+                prefixIcon: Icons.people,
+                // errorText: _opponentError,
+                onChanged: (_) {
+                  if (_opponentError != null) {
+                    setState(() {
+                      _opponentError = null;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _locationController,
+                hint: '장소를 입력하세요',
+                prefixIcon: Icons.location_on,
+                // errorText: _locationError,
+                onChanged: (_) {
+                  if (_locationError != null) {
+                    setState(() {
+                      _locationError = null;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 16),
               CustomTimePicker(
@@ -132,72 +176,15 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                   });
                 },
               ),
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CustomTextField(
-                    controller: _opponentController,
-                    hint: '상대팀을 입력하세요',
-                    prefixIcon: Icons.people,
-                    onChanged: (_) {
-                      if (_opponentError != null) {
-                        setState(() {
-                          _opponentError = null;
-                        });
-                      }
-                    },
-                  ),
-                  if (_opponentError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, left: 8),
-                      child: Text(
-                        _opponentError!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CustomTextField(
-                    controller: _locationController,
-                    hint: '장소를 입력하세요',
-                    prefixIcon: Icons.location_on,
-                    onChanged: (_) {
-                      if (_locationError != null) {
-                        setState(() {
-                          _locationError = null;
-                        });
-                      }
-                    },
-                  ),
-                  if (_locationError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, left: 8),
-                      child: Text(
-                        _locationError!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
               const SizedBox(height: 24),
               Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Expanded(
                     child: CustomButton(
                       backgroundColor: Colors.white,
                       textColor: Colors.black,
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(),
                       text: '취소',
                     ),
                   ),
@@ -207,7 +194,8 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
                       backgroundColor: Colors.white,
                       textColor: Colors.black,
                       onPressed: _validateAndSubmit,
-                      text: widget.initialGame != null ? '수정' : '추가',
+                      text: '저장',
+                      isLoading: _isLoading,
                     ),
                   ),
                 ],
@@ -217,5 +205,12 @@ class _GameFormDialogState extends ConsumerState<GameFormDialog> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _opponentController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 }
